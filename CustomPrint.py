@@ -1,38 +1,86 @@
 import sys
 
 class CustomPrint(object):
-    def __init__(self, prefix, print_type_array, verbosities):
-        self.__print_type_array__ = print_type_array
-        self.__verbosities__ = verbosities
-        for verbosity in verbosities:
-            if verbosity not in print_type_array:
-                raise Exception("Allowed verbosity must be in the list")
-
-        self.__prefix__ = prefix
-
-    def __call__(self, print_type, *values, **kwargs):
-        if print_type not in self.__print_type_array__:
-            raise Exception(f"Print type must be one of {self.__print_type_array__}, rather than {print_type}")
+    def __init__(self, name, configs, verbosities):
+        # example_configs = {
+        #   "user": {
+        #       "notification",
+        #       "warning",
+        #       "error"
+        #   },
+        #   "dev": {
+        #       "notification",
+        #       "warning",
+        #       "error",
+        #       "debug"
+        #   }
+        # }
+        self.__configs__ = configs
         
-        if print_type not in self.__verbosities__:
+        self.__verbosities__ = verbosities
+
+        for person in self.__verbosities__:
+            if person not in self.__configs__:
+                raise Exception("Allowed people {} must be in the config list".format(person))
+            for level in self.__verbosities__[person]:
+                if level not in self.__configs__[person]:
+                    raise Exception("Allowed level {} must be in the config list".format(level))
+
+        self.__name__ = name
+
+    def __call__(self, people, level, *values, **kwargs):
+        if people not in self.__configs__:
+            raise Exception(f"Received people must be one of {list(self.__configs__.keys())}, rather than {people}")
+
+        if level not in self.__configs__[people]:
+            raise Exception(f"Level must be one of {self.__configs__[people]}, rather than {level}")
+
+        if people not in self.__verbosities__:
+            return
+        
+        if level not in self.__verbosities__[people]:
             return
 
-        if self.__prefix__:
-            print(f"{print_type} from {self.__prefix__}:", *values, **kwargs)
+        if self.__name__:
+            print(f"{level} from {self.__name__}: ", *values, **kwargs)
         else:
-            print(*values, **kwargs)
+            print(f"{level}: "*values, **kwargs)
 
-    def use_dict(self, d):
-        for print_type in d:
-            try:
-                self(print_type, d[print_type])
-            except:
-                continue
+    def use_dict(self, print_dict):
+        for people in print_dict:
+            for level in print_dict[people]:
+                try:
+                    self(people, level, print_dict[people][level])
+                except:
+                    continue
 
 class StandardPrint(CustomPrint):
-    def __init__(self, prefix, verbosities):
-        super().__init__(prefix, ["error", "warning", "notification", "debug"], verbosities)
+    def __init__(self, name, verbosities):
+        super().__init__(
+            name, 
+            configs= {
+                "user": {
+                    "notification",
+                    "warning",
+                    "error"
+                },
+                "dev": {
+                    "notification",
+                    "warning",
+                    "error",
+                    "debug"
+                }
+            },
+            verbosities= verbosities
+        )
 
 if __name__ == "__main__":
-    __print__ = StandardPrint("aa", ["error", "debug"])
-    __print__("huy", print_type= "error", end = "1")
+    __print__ = StandardPrint(
+        "aa", 
+        verbosities= {
+            "user":{
+                "notification"
+            }
+        }
+    )
+    __print__("dev", "warning", "huy", end = "1")
