@@ -22,6 +22,13 @@ class CustomPrint(object):
         else:
             print(*values, **kwargs)
 
+    def use_dict(self, d):
+        for print_type in d:
+            try:
+                self(print_type, d[print_type])
+            except:
+                continue
+
 class StandardPrint(CustomPrint):
     def __init__(self, prefix, verbosities):
         super().__init__(prefix, ["error", "warning", "notification", "debug"], verbosities)
